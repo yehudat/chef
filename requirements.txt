@@ -1,0 +1,2 @@
+# Core dependencies for `chef` tool.
+coverage>=7.0,<8.0
