@@ -3,6 +3,10 @@ import unittest
 from contextlib import redirect_stdout, redirect_stderr
 from unittest.mock import patch, MagicMock
 
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import chef
 
 
