@@ -20,5 +20,5 @@ docker run --rm \
   -v "$PWD":/app \
   -w /app \
   "$IMAGE_NAME" \
-  "$@"
+  python chef.py "$@"
 
