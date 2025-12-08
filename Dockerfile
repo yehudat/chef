@@ -7,7 +7,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install dependencies first (better layer caching)
+# Install system build dependencies for pyslang.
+# pyslang may need a C++, compiler and CMake at build time
+# install a minimal set of build tools here.  Remove any unused packages as
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

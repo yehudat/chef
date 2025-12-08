@@ -1,2 +1,10 @@
-# Core dependencies for `chef` tool.
+# Core dependencies for the `chef` tool.
 coverage>=7.0,<8.0
+
+# Install pyslang so that the project can take advantage of the SystemVerilog
+# front‑end provided by the slang compiler.  pyslang exposes the full slang
+# front‑end via Python bindings.  This will automatically pull in any
+# additional Python build requirements (via PEP 517) when available.  If
+# wheels are not available for your platform, pip will fall back to a source
+# build which uses CMake; see the Dockerfile for build prerequisites.
+pyslang
