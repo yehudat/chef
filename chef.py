@@ -1,0 +1,79 @@
+import argparse
+import sys
+from svlang.parser import SVParser
+from svlang.renderer import MarkdownTableRenderer
+
+
+def cmd_fetch_if(args: argparse.Namespace) -> int:
+    """Fetch interface (ports + params) and print in Markdown."""
+    parser = SVParser()
+    modules = parser.parse_file(args.file)
+
+    renderer = MarkdownTableRenderer()
+
+    for mod in modules:
+        print(f"# Module {mod.name}\n")
+
+        # Signal interface
+        print(renderer.render_signal_table(mod.ports))
+        print()
+
+        # Parameters / generics
+        print(renderer.render_parameter_table(mod.parameters))
+        print()
+
+    return 0
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="chef.py",
+        description="Facade for SystemVerilog utilities.",
+    )
+
+    # Global options (e.g. --format) for future use
+    parser.add_argument(
+        "--format",
+        choices=["markdown", "csv"],
+        default="markdown",
+        help="Output format (default: markdown). CSV can be added later.",
+    )
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    # fetchif subcommand
+    fetch_if = subparsers.add_parser(
+        "fetchif",
+        help="Fetch interface description (ports and parameters).",
+    )
+    fetch_if.add_argument(
+        "file",
+        metavar="FILE",
+        help="SystemVerilog file to parse.",
+    )
+    fetch_if.set_defaults(func=cmd_fetch_if)
+
+    return parser
+
+
+def main(argv=None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
+
+    if not hasattr(args, "func"):
+        parser.print_help()
+        return 1
+
+    # For now we only support markdown; later you can branch on args.format.
+    if args.format != "markdown":
+        print("Only markdown output is implemented at the moment.", file=sys.stderr)
+        return 2
+
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

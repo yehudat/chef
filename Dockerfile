@@ -14,6 +14,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the source tree
 COPY . .
 
-# Default command: run the unittest regression
-CMD ["python", "-m", "unittest", "discover", "-s", "tests", "-v"]
-
+# Default command: run chef.py (facade CLI)
+CMD ["python", "chef.py"]
