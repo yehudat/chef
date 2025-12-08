@@ -37,10 +37,12 @@ from .model import (
 )
 
 from .parser import SVParser
+from .genesis2 import Genesis2Parser
 from .renderer import TableRenderer, MarkdownTableRenderer
 
 __all__ = [
     "SVParser",
+    "Genesis2Parser",
     "TableRenderer",
     "MarkdownTableRenderer",
     "IDataType",
