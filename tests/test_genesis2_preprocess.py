@@ -2,10 +2,11 @@
 
 This test module exercises the Genesis2Strategy preprocessing stage
 without requiring the ``pyslang`` compiler.  The Genesis2 frontend
-strips debug annotations, ``import`` statements, and ``var`` keywords
-from Genesis2‑generated RTL before handing the cleaned source to the
-real slang backend.  These tests ensure the textual transformations
-occur as expected.
+strips debug annotations and ``var`` keywords from Genesis2‑generated
+RTL before handing the cleaned source to the real slang backend.
+Import statements are preserved so that slang can resolve types from
+packages.  These tests ensure the textual transformations occur as
+expected.
 
 The tests in this file are always executed regardless of whether
 ``pyslang`` is installed, because they do not rely on compiling the
@@ -33,8 +34,8 @@ class TestGenesis2Preprocess(unittest.TestCase):
         tmp.close()
         return tmp.name
 
-    def test_dbg_and_import_and_var_removed(self) -> None:
-        """The preprocessing should drop DBG comments, import statements and var keywords."""
+    def test_dbg_and_var_removed_import_preserved(self) -> None:
+        """The preprocessing should drop DBG comments and var keywords, but preserve imports."""
         sv_text = """
 import pkg::*;
 module test;
@@ -51,8 +52,9 @@ endmodule
             # Read back the cleaned file contents
             with open(cleaned_path, "r", encoding="utf-8") as fh:
                 cleaned = fh.read()
-            # The import line and DBG comment should be absent
-            self.assertNotIn("import", cleaned)
+            # The import line should be preserved (for package resolution)
+            self.assertIn("import pkg::*", cleaned)
+            # DBG comment should be absent
             self.assertNotIn("DBG:", cleaned)
             # The 'var' keyword should be removed after directions
             self.assertNotIn("input var", cleaned)
