@@ -160,6 +160,7 @@ class SlangBackend:
 
     def _convert_modules(self, comp: Compilation) -> List[Module]:  # type: ignore[override]
         modules: List[Module] = []
+        # First try to get instantiated modules from root members
         root = comp.getRoot()
         for member in getattr(root, "members", []):
             try:
@@ -168,6 +169,16 @@ class SlangBackend:
                 continue
             if SymbolKind is not None and kind == SymbolKind.Module:  # type: ignore[comparison-overlap]
                 modules.append(self._convert_module(member))
+
+        # If no instantiated modules found, fall back to definitions
+        # This handles cases where modules aren't instantiated at top level
+        if not modules:
+            for defn in comp.getDefinitions():
+                try:
+                    if defn.definitionKind.name == "Module":
+                        modules.append(self._convert_definition_to_module(defn))
+                except Exception:
+                    continue
         return modules
 
     def _convert_module(self, mod_sym) -> Module:
@@ -178,6 +189,69 @@ class SlangBackend:
         ports: List[Port] = []
         for port in getattr(mod_sym, "ports", []):
             ports.append(self._convert_port(port))
+        return Module(name=name, parameters=parameters, ports=ports)
+
+    def _convert_definition_to_module(self, defn) -> Module:
+        """Convert a Definition symbol to a Module by extracting from syntax.
+
+        When modules are not instantiated at top level, slang provides them
+        as Definition symbols.  We extract port and parameter information
+        directly from the syntax tree.
+        """
+        name: str = getattr(defn, "name", "unknown")
+        parameters: List[Parameter] = []
+        ports: List[Port] = []
+
+        try:
+            syntax = defn.syntax
+            header = syntax.header
+
+            # Extract parameters from syntax
+            if header.parameters:
+                for param in getattr(header.parameters, "parameters", []):
+                    # Skip tokens (commas, etc)
+                    if not hasattr(param, "declarator"):
+                        continue
+                    param_name = str(param.declarator).strip()
+                    # Try to get default value
+                    default = None
+                    if hasattr(param, "initializer") and param.initializer:
+                        default = str(param.initializer).strip()
+                        # Remove leading '='
+                        if default.startswith("="):
+                            default = default[1:].strip()
+                    parameters.append(Parameter(
+                        name=param_name,
+                        data_type=BasicType(name="parameter"),
+                        default=default
+                    ))
+
+            # Extract ports from syntax
+            if header.ports:
+                for port in getattr(header.ports, "ports", []):
+                    # Skip tokens (commas, etc)
+                    if not hasattr(port, "declarator"):
+                        continue
+                    port_name = str(port.declarator).strip()
+                    direction = ""
+                    data_type_str = "logic"
+
+                    if hasattr(port, "header") and port.header:
+                        # Get direction
+                        if hasattr(port.header, "direction"):
+                            direction = str(port.header.direction).strip().lower()
+                        # Get data type
+                        if hasattr(port.header, "dataType"):
+                            data_type_str = str(port.header.dataType).strip()
+
+                    ports.append(Port(
+                        name=port_name,
+                        direction=direction,
+                        data_type=BasicType(name=data_type_str)
+                    ))
+        except Exception:
+            pass
+
         return Module(name=name, parameters=parameters, ports=ports)
 
     def _convert_parameter(self, param_sym) -> Parameter:
