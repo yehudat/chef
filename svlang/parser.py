@@ -364,32 +364,7 @@ class SVParser:
             if not item:
                 continue
             # Remove any trailing comma or semicolon remnants
-            item = item.rstrip(',;').strip()
-            if not item:
-                continue
-            # Genesis2 (and other generators) often include comment lines before
-            # the actual port declaration within a comma-separated item.  Strip
-            # leading full-line comments to locate the actual declaration.  We
-            # iterate while the line starts with '//' after stripping leading
-            # whitespace.  This preserves inline comments on the same line as
-            # the declaration but removes standalone comment lines.
-            while True:
-                # Find start of first non-whitespace character
-                stripped = item.lstrip()
-                if stripped.startswith('//'):
-                    # Remove this comment line
-                    newline_pos = item.find('\n')
-                    if newline_pos == -1:
-                        # Item is only a comment line; skip
-                        item = ''
-                        break
-                    # Drop the comment line and continue
-                    item = item[newline_pos + 1 :].lstrip()
-                    continue
-                break
-            # Skip items that were entirely comments
-            if not item:
-                continue
+            item = item.rstrip(',;')
             # Extract direction (must appear at start of remaining text)
             mdir = re.match(r'(input|output|inout)\b', item)
             if not mdir:
@@ -478,42 +453,26 @@ class SVParser:
         if not type_part:
             # Default type is logic
             return BasicType(name='logic')
-        # Extract any packed ranges (e.g. [31:0]) that may be
-        # attached to the type without whitespace.  We accumulate
-        # all ranges into a single bit_range string separated by
-        # spaces.  The remaining base part is used for nettype and
-        # type name detection.
-        bit_ranges = re.findall(r'\[[^\]]+\]', type_part)
-        bit_range = None
-        if bit_ranges:
-            bit_range = ' '.join(bit_ranges)
-            # remove the ranges from the type_part for further tokenisation
-            type_part = re.sub(r'\[[^\]]+\]', '', type_part)
-            type_part = type_part.strip()
         tokens = type_part.split()
         nettype = None
         signed = False
+        bit_range = None
         type_name = None
         for tok in tokens:
             # Capture packed range tokens like [7:0] or [WIDTH-1:0]
-            # (ranges have been removed above)
-            if tok.lower() == 'signed':
+            if tok.startswith('[') and tok.endswith(']'):
+                if bit_range is None:
+                    bit_range = tok
+                else:
+                    bit_range += ' ' + tok
+            elif tok.lower() == 'signed':
                 signed = True
             elif tok.lower() in {
                 'logic', 'wire', 'reg', 'bit', 'var', 'integer', 'int', 'byte',
                 'shortint', 'longint', 'time', 'real', 'realtime', 'shortreal'
             }:
-                # If a net type has already been seen and we hit another
-                # token in this set, interpret the new token as a type name.
-                # This allows constructs like "var logic" where var is
-                # treated as qualifier and logic is the actual nettype.
-                if nettype is None:
-                    nettype = tok
-                else:
-                    type_name = tok
+                nettype = tok
             else:
-                # Token that is not a net type or modifier is assumed
-                # to be a user defined type name.
                 type_name = tok
         # If user defined type exists, use it
         if type_name and type_name in self._types:

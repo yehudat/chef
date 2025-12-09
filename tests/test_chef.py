@@ -3,10 +3,6 @@ import unittest
 from contextlib import redirect_stdout, redirect_stderr
 from unittest.mock import patch, MagicMock
 
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import chef
 
 
@@ -35,11 +31,11 @@ class TestChefCLI(unittest.TestCase):
         self.assertIn("Only markdown output is implemented", stderr_output)
 
     @patch("chef.MarkdownTableRenderer")
-    @patch("chef.SVParser")
-    def test_fetch_if_invokes_parser_and_renderer(self, mock_parser_cls, mock_renderer_cls):
-        """fetchif should call SVParser.parse_file and render tables."""
-        # Arrange: fake parser + module + renderer
-        mock_parser = mock_parser_cls.return_value
+    @patch("chef.LRM2017Strategy")
+    def test_fetch_if_invokes_strategy_and_renderer(self, mock_strategy_cls, mock_renderer_cls):
+        """fetchif should call the selected strategy and render tables."""
+        # Arrange: fake strategy and renderer
+        mock_strategy = mock_strategy_cls.return_value
         mock_renderer = mock_renderer_cls.return_value
 
         mock_module = MagicMock()
@@ -47,7 +43,7 @@ class TestChefCLI(unittest.TestCase):
         mock_module.ports = ["PORT1", "PORT2"]
         mock_module.parameters = ["PARAM1"]
 
-        mock_parser.parse_file.return_value = [mock_module]
+        mock_strategy.get_modules.return_value = [mock_module]
         mock_renderer.render_signal_table.return_value = "SIGNAL_TABLE_MD"
         mock_renderer.render_parameter_table.return_value = "PARAM_TABLE_MD"
 
@@ -59,8 +55,9 @@ class TestChefCLI(unittest.TestCase):
         self.assertEqual(rc, 0)
 
         # Assert parser is used correctly
-        mock_parser_cls.assert_called_once_with()
-        mock_parser.parse_file.assert_called_once_with("my_design.sv")
+        mock_strategy_cls.assert_called_once_with()
+        mock_strategy.load_design.assert_called_once_with(["my_design.sv"])
+        mock_strategy.get_modules.assert_called_once_with()
 
         # Assert renderer is used correctly
         mock_renderer_cls.assert_called_once_with()
