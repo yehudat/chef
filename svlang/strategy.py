@@ -18,7 +18,11 @@ installed or catch the :class:`ImportError` raised by
 
 from __future__ import annotations
 
-from typing import Iterable, List
+import os
+import re
+import subprocess
+from pathlib import Path
+from typing import Iterable, List, Set
 
 from .model import Module
 from .slang_backend import SlangBackend
@@ -107,22 +111,45 @@ class Genesis2Strategy(InterfaceStrategy):
         * Lines containing ``DBG:`` (debug annotations) are dropped.
         * ``var`` keywords immediately following a port direction
           (``input``, ``output`` or ``inout``) are removed.
-        * Top‑level ``import`` statements (prior to the port list) are
-          removed.
+
+        Import statements are preserved and the referenced packages are
+        resolved by searching from the git repository root.  The resolved
+        package files are written to a hidden ``.imports.f`` file and
+        passed to slang for compilation.
 
         Each source file is read, transformed and written to a
         temporary file.  The slang backend is then invoked on these
-        pre‑processed files.  Any compilation errors are recorded but
-        not raised; Genesis2 code is tolerated even if slang finds
-        unresolved references or other issues.
+        pre‑processed files along with any resolved package files.
         """
+        import tempfile
+
+        # Collect all imports from all files
+        all_imports: Set[str] = set()
+        for path in files:
+            all_imports.update(self._extract_imports(path))
+
+        # Resolve package files by searching from git root
+        package_files: List[str] = []
+        if all_imports:
+            git_root = self._find_git_root(files[0])
+            if git_root:
+                package_files = self._resolve_packages(all_imports, git_root)
+
         # Preprocess each input file into a temporary file.
         processed: List[str] = []
         for path in files:
             processed.append(self._preprocess_file(path))
-        # Load the cleaned files using the backend.  Errors are not
-        # considered fatal for Genesis2; we ignore any exceptions.
-        self.backend.load_design(processed)
+
+        # Create .imports.f file if we have package files
+        if package_files:
+            imports_f = os.path.join(os.path.dirname(processed[0]), ".imports.f")
+            with open(imports_f, "w", encoding="utf-8") as f:
+                for pkg_file in package_files:
+                    f.write(f"{pkg_file}\n")
+
+        # Load package files first, then the preprocessed main files
+        all_files = package_files + processed
+        self.backend.load_design(all_files)
 
     def get_modules(self) -> List[Module]:
         return self.backend.get_modules()
@@ -130,36 +157,75 @@ class Genesis2Strategy(InterfaceStrategy):
     # ------------------------------------------------------------------
     # Internal helpers
 
+    def _extract_imports(self, path: str) -> Set[str]:
+        """Extract package names from import statements in the file.
+
+        Returns a set of package names (e.g., {'nif_pkg', 'sys_pkg'}).
+        """
+        imports: Set[str] = set()
+        import_pattern = re.compile(r'import\s+(\w+)::')
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                for match in import_pattern.finditer(line):
+                    imports.add(match.group(1))
+        return imports
+
+    def _find_git_root(self, path: str) -> str | None:
+        """Find the git repository root for the given file path."""
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                cwd=os.path.dirname(os.path.abspath(path)),
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return None
+
+    def _resolve_packages(self, package_names: Set[str], git_root: str) -> List[str]:
+        """Resolve package names to file paths by searching from git root.
+
+        Searches for files named <package_name>.sv or <package_name>.svh
+        recursively under the git root.
+        """
+        resolved: List[str] = []
+        root_path = Path(git_root)
+
+        for pkg_name in package_names:
+            # Search for <pkg_name>.sv or <pkg_name>.svh
+            for pattern in [f"**/{pkg_name}.sv", f"**/{pkg_name}.svh"]:
+                matches = list(root_path.glob(pattern))
+                if matches:
+                    # Use the first match found
+                    resolved.append(str(matches[0]))
+                    break
+
+        return resolved
+
     def _preprocess_file(self, path: str) -> str:
         """Return a path to a cleaned copy of the given SystemVerilog file.
 
         The cleaning process removes Genesis2 debug comments (``// DBG:``),
-        strips the ``var`` keyword after port directions, and drops
-        ``import`` statements.  The returned file is created in a
-        temporary directory and should be cleaned up by the caller if
-        necessary.
+        strips the ``var`` keyword after port directions.  Import statements
+        are preserved so slang can use them with the resolved package files.
+        The returned file is created in a temporary directory and should be
+        cleaned up by the caller if necessary.
         """
-        import os
-        import re
         import tempfile
+
         # Read the original file
         with open(path, "r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
         cleaned: List[str] = []
-        saw_module = False
         for line in lines:
             # Skip lines containing debug annotations
             if "DBG:" in line:
                 continue
-            # Skip import statements entirely
-            if re.match(r"\s*import\s+.*;", line):
-                continue
-            # Once we have seen the module line, remove 'var' after port direction
-            # e.g. 'input var logic [31:0] foo' -> 'input logic [31:0] foo'
-            stripped = line
             # Replace 'input var', 'output var', 'inout var'
-            stripped = re.sub(r"\b(input|output|inout)\s+var\b", r"\1", stripped)
-            cleaned.append(stripped)
+            line = re.sub(r"\b(input|output|inout)\s+var\b", r"\1", line)
+            cleaned.append(line)
         # Write to a temporary file
         tmp = tempfile.NamedTemporaryFile("w", delete=False, suffix=os.path.splitext(path)[1], prefix="gen2_", encoding="utf-8")
         tmp.writelines(cleaned)
