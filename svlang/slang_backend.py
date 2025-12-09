@@ -113,21 +113,47 @@ class SlangBackend:
             comp.addSyntaxTree(tree)
 
         diags = comp.getAllDiagnostics()
-        errors = [d for d in diags if d.severity == DiagnosticSeverity.Error]
-        if errors:
-            messages = []
-            for diag in errors:
-                try:
-                    messages.append(str(diag))
-                except Exception:
-                    messages.append(repr(diag))
-            raise RuntimeError("Slang compilation failed: " + "; ".join(messages))
+        errors = [d for d in diags if getattr(d, "isError", lambda: False)()]
 
         self._modules = self._convert_modules(comp)
+        self._had_errors = bool(errors)
+        self._error_messages = []  # type: List[str]
+
+        if errors:
+            for diag in errors:
+                try:
+                    self._error_messages.append(str(diag))
+                except Exception:
+                    self._error_messages.append(repr(diag))
 
     def get_modules(self) -> List[Module]:
         """Return a list of modules extracted from the most recent design."""
         return list(self._modules)
+
+    # ------------------------------------------------------------------
+    # Error reporting helpers
+
+    def had_errors(self) -> bool:
+        """Return True if the last compilation reported any errors.
+
+        This flag is set by :meth:`load_design` based on the presence
+        of diagnostics whose ``isError()`` method returns True.  It
+        allows strategies to decide whether to treat a compilation as
+        failed (strict mode) or to proceed despite errors (Genesis2
+        mode).
+        """
+        return getattr(self, "_had_errors", False)
+
+    def get_error_messages(self) -> List[str]:
+        """Return any recorded error messages from the last compilation.
+
+        These messages are collected by :meth:`load_design` from
+        diagnostics reported as errors by slang.  They are not
+        automatically raised in the backend; strategies should call
+        :meth:`had_errors` and, if true, use these messages in an
+        exception or report.
+        """
+        return list(getattr(self, "_error_messages", []))
 
     # ------------------------------------------------------------------
     # Internal conversion helpers
