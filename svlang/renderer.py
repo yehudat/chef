@@ -14,7 +14,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional
 
-from .model import Parameter, Port
+from .model import Parameter, Port, StructType, UnionType
 
 
 class TableRenderer(ABC):
@@ -48,6 +48,21 @@ class TableRenderer(ABC):
 class MarkdownTableRenderer(TableRenderer):
     """Render tables in GitHub Flavoured Markdown format."""
 
+    def _format_struct_fields(self, data_type) -> str:
+        """Format struct/union fields for display in the Description column.
+
+        Returns fields formatted with <br/> separators for vertical display.
+        """
+        if not isinstance(data_type, (StructType, UnionType)):
+            return ""
+
+        field_strs = []
+        for field in data_type.fields:
+            field_type_str = str(field.data_type)
+            field_strs.append(f"{field_type_str} {field.name}")
+
+        return "<br/>".join(field_strs)
+
     def render_signal_table(self, signals: Iterable[Port]) -> str:
         headers = [
             "Signal Name",
@@ -64,6 +79,15 @@ class MarkdownTableRenderer(TableRenderer):
         rows: List[str] = [header_line, align_line]
         for sig in signals:
             width_str = str(sig.data_type)
+            # Build description: include struct fields if applicable
+            desc_parts = []
+            if sig.description:
+                desc_parts.append(sig.description)
+            struct_fields = self._format_struct_fields(sig.data_type)
+            if struct_fields:
+                desc_parts.append(struct_fields)
+            desc = "<br/>".join(desc_parts) if desc_parts else ""
+
             row = "| {name} | {width} | {dir} | {rst} | {default} | {clk} | {desc} |".format(
                 name=sig.name,
                 width=width_str,
@@ -71,7 +95,7 @@ class MarkdownTableRenderer(TableRenderer):
                 rst=sig.reset_value or "",
                 default=sig.default_value or "",
                 clk=sig.clk_domain or "",
-                desc=sig.description or "",
+                desc=desc,
             )
             rows.append(row)
         return "\n".join(rows)
