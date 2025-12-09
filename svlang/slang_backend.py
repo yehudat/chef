@@ -84,6 +84,7 @@ class SlangBackend:
         self.include_dirs = include_dirs or []
         self.defines = defines or []
         self._modules: List[Module] = []
+        self._compilation: Optional[Compilation] = None  # type: ignore[valid-type]
 
     def load_design(self, files: List[str]) -> None:
         """Compile the given SystemVerilog source files.
@@ -111,6 +112,9 @@ class SlangBackend:
         comp = Compilation()
         for tree in trees:
             comp.addSyntaxTree(tree)
+
+        # Store compilation for type lookups
+        self._compilation = comp
 
         diags = comp.getAllDiagnostics()
         errors = [d for d in diags if getattr(d, "isError", lambda: False)()]
@@ -244,15 +248,148 @@ class SlangBackend:
                         if hasattr(port.header, "dataType"):
                             data_type_str = str(port.header.dataType).strip()
 
+                    # Try to resolve the type to get struct fields
+                    data_type = self._lookup_type(data_type_str)
+
                     ports.append(Port(
                         name=port_name,
                         direction=direction,
-                        data_type=BasicType(name=data_type_str)
+                        data_type=data_type
                     ))
         except Exception:
             pass
 
         return Module(name=name, parameters=parameters, ports=ports)
+
+    def _lookup_type(self, type_name: str) -> BasicType | StructType | UnionType:
+        """Look up a type by name in the compilation.
+
+        If the type is found and is a struct/union, returns a StructType/UnionType
+        with its fields. Otherwise returns a BasicType with the type name.
+        """
+        if self._compilation is None:
+            return BasicType(name=type_name)
+
+        try:
+            # Try to get the type from a package via semantic model
+            for pkg in self._compilation.getPackages():
+                for member in getattr(pkg, "members", []):
+                    if getattr(member, "name", "") == type_name:
+                        # Found the type definition
+                        if hasattr(member, "type"):
+                            return self._convert_type(member.type)
+                        # Check if it's a typedef
+                        target_type = getattr(member, "targetType", None)
+                        if target_type is not None:
+                            return self._convert_type(target_type)
+
+            # Fall back to searching syntax trees for typedef declarations
+            for tree in self._compilation.getSyntaxTrees():
+                result = self._find_typedef_in_syntax(tree.root, type_name)
+                if result is not None:
+                    return result
+        except Exception:
+            pass
+
+        return BasicType(name=type_name)
+
+    def _find_typedef_in_syntax(self, node, type_name: str) -> BasicType | StructType | UnionType | None:
+        """Search syntax tree for a typedef declaration matching the given name.
+
+        Returns a StructType/UnionType if found, otherwise None.
+        """
+        try:
+            # Check if this node is a typedef declaration
+            if hasattr(node, "kind") and node.kind.name == "TypedefDeclaration":
+                # Get the name from the declarator
+                if hasattr(node, "name"):
+                    decl_name = str(node.name).strip()
+                    if decl_name == type_name:
+                        return self._extract_struct_from_typedef_syntax(node)
+
+            # Recursively search members
+            for member in getattr(node, "members", []):
+                result = self._find_typedef_in_syntax(member, type_name)
+                if result is not None:
+                    return result
+        except Exception:
+            pass
+        return None
+
+    def _extract_struct_from_typedef_syntax(self, typedef_node) -> BasicType | StructType | UnionType:
+        """Extract struct/union type information from a TypedefDeclaration syntax node."""
+        try:
+            # Get the type being defined
+            type_syntax = getattr(typedef_node, "type", None)
+            if type_syntax is None:
+                return BasicType(name=str(typedef_node.name).strip())
+
+            type_kind = getattr(type_syntax, "kind", None)
+            if type_kind is None:
+                return BasicType(name=str(typedef_node.name).strip())
+
+            # Check if it's a struct
+            if "Struct" in type_kind.name:
+                return self._parse_struct_syntax(typedef_node.name, type_syntax)
+
+            # Check if it's a union
+            if "Union" in type_kind.name:
+                return self._parse_union_syntax(typedef_node.name, type_syntax)
+
+        except Exception:
+            pass
+        return BasicType(name=str(getattr(typedef_node, "name", "unknown")).strip())
+
+    def _parse_struct_syntax(self, name, struct_syntax) -> StructType:
+        """Parse a struct type from syntax and extract its fields."""
+        fields: List[StructField] = []
+        try:
+            # Get struct members
+            members = getattr(struct_syntax, "members", [])
+            for member in members:
+                # Skip non-member syntax (e.g., tokens)
+                if not hasattr(member, "kind"):
+                    continue
+                if "StructUnionMember" in member.kind.name or "DataDeclaration" in member.kind.name:
+                    field_info = self._extract_field_from_member_syntax(member)
+                    if field_info:
+                        fields.append(field_info)
+        except Exception:
+            pass
+        return StructType(str(name).strip(), fields)
+
+    def _parse_union_syntax(self, name, union_syntax) -> UnionType:
+        """Parse a union type from syntax and extract its fields."""
+        fields: List[StructField] = []
+        try:
+            members = getattr(union_syntax, "members", [])
+            for member in members:
+                if not hasattr(member, "kind"):
+                    continue
+                if "StructUnionMember" in member.kind.name or "DataDeclaration" in member.kind.name:
+                    field_info = self._extract_field_from_member_syntax(member)
+                    if field_info:
+                        fields.append(field_info)
+        except Exception:
+            pass
+        return UnionType(str(name).strip(), fields)
+
+    def _extract_field_from_member_syntax(self, member_syntax) -> StructField | None:
+        """Extract field name and type from a struct/union member syntax node."""
+        try:
+            # Get declarators (field names)
+            declarators = getattr(member_syntax, "declarators", [])
+            for decl in declarators:
+                if hasattr(decl, "name"):
+                    field_name = str(decl.name).strip()
+                    # Get the type
+                    type_syntax = getattr(member_syntax, "type", None)
+                    if type_syntax:
+                        type_str = str(type_syntax).strip()
+                        return StructField(field_name, BasicType(name=type_str))
+        except Exception:
+            pass
+        return None
 
     def _convert_parameter(self, param_sym) -> Parameter:
         name: str = getattr(param_sym, "name", "")
