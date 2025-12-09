@@ -437,11 +437,6 @@ class SVParser:
         ``self._types`` it is returned directly.  Otherwise a
         :class:`BasicType` is constructed.
 
-        In addition to handling whitespace-separated tokens, this
-        implementation also detects packed ranges attached to a base
-        type without an intervening space (e.g. ``logic[31:0]``) and
-        splits them into separate base type and range tokens.
-
         Args:
             type_part: The textual specification of the type (without
                 the variable name).
