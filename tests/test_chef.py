@@ -49,7 +49,7 @@ class TestChefCLI(unittest.TestCase):
 
         buf = io.StringIO()
         with redirect_stdout(buf):
-            rc = chef.main(["fetchif", "my_design.sv"])
+            rc = chef.main(["fetchif", "--strategy", "lrm", "my_design.sv"])
 
         # Assert exit code
         self.assertEqual(rc, 0)
