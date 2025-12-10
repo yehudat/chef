@@ -66,7 +66,7 @@ class MarkdownTableRenderer(TableRenderer):
     def render_signal_table(self, signals: Iterable[Port]) -> str:
         headers = [
             "Signal Name",
-            "Width",
+            "Type",
             "Direction",
             "reset value",
             "default value",
