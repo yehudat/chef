@@ -36,6 +36,7 @@ and other kinds as needed.
 
 from __future__ import annotations
 
+import re
 from typing import Iterable, List, Optional
 
 from .model import (
@@ -162,6 +163,39 @@ class SlangBackend:
     # ------------------------------------------------------------------
     # Internal conversion helpers
 
+    def _clean_direction(self, direction: str) -> str:
+        """Clean Genesis2 comments from direction string.
+
+        Genesis2 generates comments like:
+            // ports for interface 'noc_stream_if.src_mp'
+            output
+
+        This removes the generic '// ports for interface' prefix but keeps
+        the interface.modport name (e.g., 'd2d_xpp_if.src_mp output').
+        """
+        # Extract interface.modport from quoted pattern
+        interface_match = re.search(r"//\s*ports for interface\s*'([^']+)'", direction)
+        interface_name = interface_match.group(1) if interface_match else None
+
+        # Remove "// ports for interface 'xxx'" comments
+        direction = re.sub(r"//\s*ports for interface\s*'[^']*'\s*", "", direction)
+        # Also handle without quotes
+        direction = re.sub(r"//\s*ports for interface\s*\S+\s*", "", direction)
+        # Remove any other single-line comments
+        direction = re.sub(r"//[^\n]*", "", direction)
+        # Extract just the direction keyword
+        direction = direction.strip()
+        # If multiple words, take the last one (should be input/output/inout)
+        words = direction.split()
+        if words:
+            direction = words[-1]
+
+        # Prepend interface.modport if found
+        if interface_name:
+            direction = f"{interface_name} {direction}"
+
+        return direction
+
     def _convert_modules(self, comp: Compilation) -> List[Module]:  # type: ignore[override]
         modules: List[Module] = []
         # First try to get instantiated modules from root members
@@ -244,6 +278,8 @@ class SlangBackend:
                         # Get direction
                         if hasattr(port.header, "direction"):
                             direction = str(port.header.direction).strip().lower()
+                            # Clean Genesis2 comments from direction
+                            direction = self._clean_direction(direction)
                         # Get data type
                         if hasattr(port.header, "dataType"):
                             data_type_str = str(port.header.dataType).strip()
