@@ -67,10 +67,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
     fetch_if.add_argument(
         "--strategy",
         choices=["lrm", "genesis2"],
-        default="lrm",
+        default="genesis2",
         help=(
             "Parser strategy to use: 'lrm' for IEEE LRM 2017 SystemVerilog, "
-            "'genesis2' for Genesis2-generated RTL (default: lrm)"
+            "'genesis2' for Genesis2-generated RTL (default: genesis2)"
         ),
     )
     fetch_if.set_defaults(func=cmd_fetch_if)
