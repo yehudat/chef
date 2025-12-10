@@ -422,10 +422,24 @@ class SlangBackend:
                     type_syntax = getattr(member_syntax, "type", None)
                     if type_syntax:
                         type_str = str(type_syntax).strip()
-                        return StructField(field_name, BasicType(name=type_str))
+                        # Clean the type string: remove comments and extract type name
+                        type_str = self._clean_type_string(type_str)
+                        # Recursively look up the type to resolve nested structs
+                        field_type = self._lookup_type(type_str)
+                        return StructField(field_name, field_type)
         except Exception:
             pass
         return None
+
+    def _clean_type_string(self, type_str: str) -> str:
+        """Clean a type string by removing comments and extra whitespace."""
+        # Remove single-line comments
+        type_str = re.sub(r"//[^\n]*", "", type_str)
+        # Remove multi-line comments
+        type_str = re.sub(r"/\*.*?\*/", "", type_str, flags=re.DOTALL)
+        # Collapse whitespace and strip
+        type_str = " ".join(type_str.split())
+        return type_str.strip()
 
     def _convert_parameter(self, param_sym) -> Parameter:
         name: str = getattr(param_sym, "name", "")
