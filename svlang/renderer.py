@@ -68,9 +68,9 @@ class MarkdownTableRenderer(TableRenderer):
             "Signal Name",
             "Type",
             "Direction",
-            "reset value",
-            "default value",
-            "clk domain",
+            "Reset Value",
+            "Default Value",
+            "clk Domain",
             "Description",
         ]
         # Header row with alignment specifier
