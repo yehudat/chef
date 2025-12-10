@@ -6,7 +6,8 @@
       "Bash(yehudats/chef:latest )",
       "Bash(time ./chef.zsh:*)",
       "Bash(./chef.zsh:*)",
-      "Bash(./test.zsh)"
+      "Bash(./test.zsh)",
+      "Bash(find:*)"
     ]
   }
 }
