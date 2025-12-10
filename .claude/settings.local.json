@@ -4,7 +4,9 @@
       "Bash(python3:*)",
       "Bash(docker run:*)",
       "Bash(yehudats/chef:latest )",
-      "Bash(python:*)"
+      "Bash(time ./chef.zsh:*)",
+      "Bash(./chef.zsh:*)",
+      "Bash(./test.zsh)"
     ]
   }
 }
