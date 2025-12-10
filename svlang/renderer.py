@@ -48,18 +48,25 @@ class TableRenderer(ABC):
 class MarkdownTableRenderer(TableRenderer):
     """Render tables in GitHub Flavoured Markdown format."""
 
-    def _format_struct_fields(self, data_type) -> str:
+    def _format_struct_fields(self, data_type, indent: int = 0) -> str:
         """Format struct/union fields for display in the Description column.
 
+        Recursively formats nested structs with 4-space indentation per level.
         Returns fields formatted with <br/> separators for vertical display.
         """
         if not isinstance(data_type, (StructType, UnionType)):
             return ""
 
         field_strs = []
+        indent_str = "&nbsp;" * (indent * 4)  # 4 spaces per indent level
         for field in data_type.fields:
             field_type_str = str(field.data_type)
-            field_strs.append(f"{field_type_str} {field.name}")
+            field_strs.append(f"{indent_str}{field_type_str} {field.name}")
+            # Recursively format nested structs/unions
+            if isinstance(field.data_type, (StructType, UnionType)):
+                nested = self._format_struct_fields(field.data_type, indent + 1)
+                if nested:
+                    field_strs.append(nested)
 
         return "<br/>".join(field_strs)
 
