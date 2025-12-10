@@ -1,0 +1,2 @@
+- run ./chef.zsh as it runs chef.py in a docker container
+- run ./test.zsh every time you complete the work on the code, but before commits
