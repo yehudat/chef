@@ -7,8 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # 1) Unit test regression on PRs (fast)
-  unit_tests:
+  # 1) Sanity tests on PRs (fast)
+  sanity_tests:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
@@ -23,33 +23,23 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          load: true                   # load image into local Docker so we can run it
-          tags: chef:latest
+          load: true
+          tags: yehudats/chef:latest
           cache-from: type=gha,scope=chef
           cache-to: type=gha,mode=max,scope=chef
 
-      - name: Run coverage in Docker (unit tests)
-        run: |
-          docker run --rm \
-            -v "$PWD":/app \
-            -w /app \
-            chef:latest \
-            coverage run -m unittest discover -s tests -v
+      - name: Run sanity tests with coverage
+        run: ./test.zsh sanity --coverage
 
-          docker run --rm \
-            -v "$PWD":/app \
-            -w /app \
-            chef:latest \
-            coverage xml -o coverage.xml
-
-      - name: Upload coverage report (PR)
-        uses: actions/upload-artifact@v4
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-          name: coverage-pr
-          path: coverage.xml
+          files: coverage.xml
+          fail_ci_if_error: true
+          flags: sanity
 
-  # 2) Extended regression on merges to main (merge-train equivalent)
-  extended_regression:
+  # 2) Full regression on merge to main
+  regression_tests:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
@@ -65,28 +55,17 @@ jobs:
         with:
           context: .
           load: true
-          tags: chef:latest
+          tags: yehudats/chef:latest
           cache-from: type=gha,scope=chef
           cache-to: type=gha,mode=max,scope=chef
 
-      - name: Run extended regression with coverage in Docker
-        run: |
-          # TODO: replace unittest call with your larger regression once it exists.
-          docker run --rm \
-            -v "$PWD":/app \
-            -w /app \
-            chef:latest \
-            coverage run -m unittest discover -s tests -v
+      - name: Run full regression with coverage
+        run: ./test.zsh regression --coverage
 
-          docker run --rm \
-            -v "$PWD":/app \
-            -w /app \
-            chef:latest \
-            coverage xml -o coverage.xml
-
-      - name: Upload coverage report (main)
-        uses: actions/upload-artifact@v4
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-          name: coverage-main
-          path: coverage.xml
+          files: coverage.xml
+          fail_ci_if_error: true
+          flags: regression
 

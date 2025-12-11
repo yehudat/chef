@@ -1,14 +1,33 @@
 #!/usr/bin/env zsh
 
 # Example usage:
-# ./test.zsh              # runs full regression (all tests)
-# ./test.zsh regression   # runs full regression (all tests)
-# ./test.zsh sanity       # runs sanity tests only (one per suite, fast)
+# ./test.zsh                      # runs full regression (all tests)
+# ./test.zsh regression           # runs full regression (all tests)
+# ./test.zsh sanity               # runs sanity tests only (one per suite, fast)
+# ./test.zsh sanity --coverage    # sanity tests with coverage report
+# ./test.zsh regression --coverage # full regression with coverage report
 
 set -euo pipefail
 
 IMAGE_NAME=yehudats/chef:latest
 MODE=${1:-regression}
+COVERAGE=false
+
+# Check for --coverage flag
+for arg in "$@"; do
+  if [[ "$arg" == "--coverage" ]]; then
+    COVERAGE=true
+  fi
+done
+
+# Set python command based on coverage flag
+if [[ "$COVERAGE" == "true" ]]; then
+  PYTHON_CMD="coverage run -m"
+  COVERAGE_REPORT="&& coverage xml -o coverage.xml"
+else
+  PYTHON_CMD="python -m"
+  COVERAGE_REPORT=""
+fi
 
 # Build the image if it doesn't exist locally
 if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
@@ -34,7 +53,7 @@ case "$MODE" in
       -v "$PWD":/app \
       -w /app \
       "$IMAGE_NAME" \
-      python -m unittest ${SANITY_TESTS[@]}
+      sh -c "$PYTHON_CMD unittest ${SANITY_TESTS[*]} $COVERAGE_REPORT"
     ;;
   regression|*)
     echo "[test.zsh] Running full regression..."
@@ -42,7 +61,7 @@ case "$MODE" in
       -v "$PWD":/app \
       -w /app \
       "$IMAGE_NAME" \
-      python -m unittest discover -s tests
+      sh -c "$PYTHON_CMD unittest discover -s tests $COVERAGE_REPORT"
     ;;
 esac
 
