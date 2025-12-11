@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # 1) Sanity tests on PRs (fast)
+  sanity_tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test Docker image (with cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: yehudats/chef:latest
+          cache-from: type=gha,scope=chef
+          cache-to: type=gha,mode=max,scope=chef
+
+      - name: Run sanity tests with coverage
+        run: ./test.sh sanity --coverage
+
+      - name: Show coverage summary
+        run: |
+          docker run --rm -v "$PWD":/app -w /app yehudats/chef:latest \
+            coverage report --show-missing
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-sanity
+          path: coverage.xml
+
+  # 2) Full regression on merge to main
+  regression_tests:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test Docker image (with cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: yehudats/chef:latest
+          cache-from: type=gha,scope=chef
+          cache-to: type=gha,mode=max,scope=chef
+
+      - name: Run full regression with coverage
+        run: ./test.sh regression --coverage
+
+      - name: Show coverage summary
+        run: |
+          docker run --rm -v "$PWD":/app -w /app yehudats/chef:latest \
+            coverage report --show-missing
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-regression
+          path: coverage.xml
+
