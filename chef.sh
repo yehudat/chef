@@ -1,8 +1,8 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 # Example usages:
-# ./chef.zsh fetchif path/to/file.sv
-# ./chef.zsh --format markdown fetchif path/to/file.sv
+# ./chef.sh fetchif path/to/file.sv
+# ./chef.sh --format markdown fetchif path/to/file.sv
 
 set -euo pipefail
 

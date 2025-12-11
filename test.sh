@@ -1,11 +1,11 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 # Example usage:
-# ./test.zsh                      # runs full regression (all tests)
-# ./test.zsh regression           # runs full regression (all tests)
-# ./test.zsh sanity               # runs sanity tests only (one per suite, fast)
-# ./test.zsh sanity --coverage    # sanity tests with coverage report
-# ./test.zsh regression --coverage # full regression with coverage report
+# ./test.sh                      # runs full regression (all tests)
+# ./test.sh regression           # runs full regression (all tests)
+# ./test.sh sanity               # runs sanity tests only (one per suite, fast)
+# ./test.sh sanity --coverage    # sanity tests with coverage report
+# ./test.sh regression --coverage # full regression with coverage report
 
 set -euo pipefail
 
@@ -31,7 +31,7 @@ fi
 
 # Build the image if it doesn't exist locally
 if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
-  echo "[test.zsh] Docker image '$IMAGE_NAME' not found, building..."
+  echo "[test.sh] Docker image '$IMAGE_NAME' not found, building..."
   docker build -t "$IMAGE_NAME" .
 fi
 
@@ -48,7 +48,7 @@ SANITY_TESTS=(
 
 case "$MODE" in
   sanity)
-    echo "[test.zsh] Running sanity tests (${#SANITY_TESTS[@]} tests)..."
+    echo "[test.sh] Running sanity tests (${#SANITY_TESTS[@]} tests)..."
     docker run --rm \
       -v "$PWD":/app \
       -w /app \
@@ -56,7 +56,7 @@ case "$MODE" in
       sh -c "$PYTHON_CMD unittest ${SANITY_TESTS[*]} $COVERAGE_REPORT"
     ;;
   regression|*)
-    echo "[test.zsh] Running full regression..."
+    echo "[test.sh] Running full regression..."
     docker run --rm \
       -v "$PWD":/app \
       -w /app \
