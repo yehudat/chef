@@ -39,7 +39,7 @@ from .model import (
 from .parser import SVParser
 from .slang_backend import SlangBackend  # noqa: F401
 from .strategy import InterfaceStrategy, LRM2017Strategy, Genesis2Strategy  # noqa: F401
-from .renderer import TableRenderer, MarkdownTableRenderer
+from .renderer import TableRenderer, MarkdownTableRenderer, CsvTableRenderer
 
 __all__ = [
     "SVParser",
@@ -49,6 +49,7 @@ __all__ = [
     "Genesis2Strategy",
     "TableRenderer",
     "MarkdownTableRenderer",
+    "CsvTableRenderer",
     "IDataType",
     "BasicType",
     "StructType",

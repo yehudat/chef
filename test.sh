@@ -38,6 +38,7 @@ fi
 # Sanity tests: one representative test per suite (excluding integration)
 SANITY_TESTS=(
   tests.test_chef.TestChefCLI.test_no_arguments_prints_help_and_returns_nonzero
+  tests.test_csv_renderer.TestCsvRendererBasic.test_simple_port_rendering
   tests.test_genesis2.TestGenesis2Strategy.test_extract_imports
   tests.test_genesis2_preprocess.TestGenesis2Preprocess.test_dbg_and_var_removed_import_preserved
   tests.test_nested_structs.TestNestedStructParsing.test_simple_struct_iter_fields

@@ -19,16 +19,12 @@ class TestChefCLI(unittest.TestCase):
         # Sanity: should show usage / help
         self.assertIn("usage:", output)
 
-    def test_rejects_non_markdown_format(self):
-        """--format csv is currently unsupported and should return 2."""
-        out = io.StringIO()
-        err = io.StringIO()
-        with redirect_stdout(out), redirect_stderr(err):
-            rc = chef.main(["--format", "csv", "fetchif", "dummy.sv"])
-
-        self.assertEqual(rc, 2)
-        stderr_output = err.getvalue()
-        self.assertIn("Only markdown output is implemented", stderr_output)
+    def test_csv_format_accepted(self):
+        """--format csv should be accepted and use CsvTableRenderer."""
+        # Just verify parsing accepts the format - actual rendering tested in test_csv_renderer.py
+        parser = chef.build_arg_parser()
+        args = parser.parse_args(["--format", "csv", "fetchif", "dummy.sv"])
+        self.assertEqual(args.format, "csv")
 
     @patch("chef.MarkdownTableRenderer")
     @patch("chef.LRM2017Strategy")
