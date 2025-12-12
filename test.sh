@@ -44,6 +44,7 @@ SANITY_TESTS=(
   tests.test_nested_structs.TestNestedStructParsing.test_simple_struct_iter_fields
   tests.test_nested_structs.TestNestedStructRendering.test_simple_struct_rendering
   tests.test_parser.TestSVParser.test_parse_struct
+  tests.test_registry.TestRegistry.test_register_and_create
   tests.test_slang_backend.TestSlangBackendCleanDirection.test_clean_direction_plain_output
 )
 

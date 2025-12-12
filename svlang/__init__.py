@@ -38,18 +38,22 @@ from .model import (
 
 from .parser import SVParser
 from .slang_backend import SlangBackend  # noqa: F401
-from .strategy import InterfaceStrategy, LRM2017Strategy, Genesis2Strategy  # noqa: F401
-from .renderer import TableRenderer, MarkdownTableRenderer, CsvTableRenderer
+from .registry import Registry
+from .strategy import InterfaceStrategy, LRM2017Strategy, Genesis2Strategy, strategy_registry  # noqa: F401
+from .renderer import TableRenderer, MarkdownTableRenderer, CsvTableRenderer, renderer_registry
 
 __all__ = [
     "SVParser",
     "SlangBackend",
+    "Registry",
     "InterfaceStrategy",
     "LRM2017Strategy",
     "Genesis2Strategy",
+    "strategy_registry",
     "TableRenderer",
     "MarkdownTableRenderer",
     "CsvTableRenderer",
+    "renderer_registry",
     "IDataType",
     "BasicType",
     "StructType",

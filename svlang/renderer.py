@@ -17,6 +17,10 @@ from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional, Tuple
 
 from .model import Parameter, Port, StructType, UnionType, IDataType
+from .registry import Registry
+
+# Registry for renderer implementations
+renderer_registry = Registry("renderer")
 
 
 class TableRenderer(ABC):
@@ -47,6 +51,7 @@ class TableRenderer(ABC):
         raise NotImplementedError
 
 
+@renderer_registry.register("markdown")
 class MarkdownTableRenderer(TableRenderer):
     """Render tables in GitHub Flavoured Markdown format."""
 
@@ -132,6 +137,7 @@ class MarkdownTableRenderer(TableRenderer):
         return "\n".join(rows)
 
 
+@renderer_registry.register("csv")
 class CsvTableRenderer(TableRenderer):
     """Render tables in CSV format with hierarchical columns for nested structs.
 

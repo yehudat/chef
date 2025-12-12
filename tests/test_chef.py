@@ -26,13 +26,18 @@ class TestChefCLI(unittest.TestCase):
         args = parser.parse_args(["--format", "csv", "fetchif", "dummy.sv"])
         self.assertEqual(args.format, "csv")
 
-    @patch("chef.MarkdownTableRenderer")
-    @patch("chef.LRM2017Strategy")
-    def test_fetch_if_invokes_strategy_and_renderer(self, mock_strategy_cls, mock_renderer_cls):
+    @patch("chef.renderer_registry")
+    @patch("chef.strategy_registry")
+    def test_fetch_if_invokes_strategy_and_renderer(self, mock_strategy_reg, mock_renderer_reg):
         """fetchif should call the selected strategy and render tables."""
         # Arrange: fake strategy and renderer
-        mock_strategy = mock_strategy_cls.return_value
-        mock_renderer = mock_renderer_cls.return_value
+        mock_strategy = MagicMock()
+        mock_renderer = MagicMock()
+
+        mock_strategy_reg.create.return_value = mock_strategy
+        mock_strategy_reg.keys.return_value = ["lrm", "genesis2"]
+        mock_renderer_reg.create.return_value = mock_renderer
+        mock_renderer_reg.keys.return_value = ["markdown", "csv"]
 
         mock_module = MagicMock()
         mock_module.name = "my_mod"
@@ -50,13 +55,13 @@ class TestChefCLI(unittest.TestCase):
         # Assert exit code
         self.assertEqual(rc, 0)
 
-        # Assert parser is used correctly
-        mock_strategy_cls.assert_called_once_with()
+        # Assert strategy registry is used correctly
+        mock_strategy_reg.create.assert_called_once_with("lrm")
         mock_strategy.load_design.assert_called_once_with(["my_design.sv"])
         mock_strategy.get_modules.assert_called_once_with()
 
-        # Assert renderer is used correctly
-        mock_renderer_cls.assert_called_once_with()
+        # Assert renderer registry is used correctly
+        mock_renderer_reg.create.assert_called_once_with("markdown")
         mock_renderer.render_signal_table.assert_called_once_with(mock_module.ports)
         mock_renderer.render_parameter_table.assert_called_once_with(mock_module.parameters)
 
