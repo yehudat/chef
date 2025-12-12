@@ -32,12 +32,12 @@ class TestChefCLI(unittest.TestCase):
         """fetchif should call the selected strategy and render tables."""
         # Arrange: fake strategy and renderer
         mock_strategy = MagicMock()
-        mock_renderer = MagicMock()
+        mock_renderer = MagicMock(spec=["render_signal_table", "render_parameter_table"])
 
         mock_strategy_reg.create.return_value = mock_strategy
         mock_strategy_reg.keys.return_value = ["lrm", "genesis2"]
         mock_renderer_reg.create.return_value = mock_renderer
-        mock_renderer_reg.keys.return_value = ["markdown", "csv"]
+        mock_renderer_reg.keys.return_value = ["markdown", "csv", "html"]
 
         mock_module = MagicMock()
         mock_module.name = "my_mod"

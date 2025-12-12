@@ -41,6 +41,7 @@ SANITY_TESTS=(
   tests.test_csv_renderer.TestCsvRendererBasic.test_simple_port_rendering
   tests.test_genesis2.TestGenesis2Strategy.test_extract_imports
   tests.test_genesis2_preprocess.TestGenesis2Preprocess.test_dbg_and_var_removed_import_preserved
+  tests.test_html_renderer.TestHtmlRendererBasic.test_simple_port_rendering
   tests.test_nested_structs.TestNestedStructParsing.test_simple_struct_iter_fields
   tests.test_nested_structs.TestNestedStructRendering.test_simple_struct_rendering
   tests.test_registry.TestRegistry.test_register_and_create

@@ -19,15 +19,18 @@ def cmd_fetch_if(args: argparse.Namespace) -> int:
     renderer = renderer_registry.create(args.format)
 
     for mod in modules:
-        print(f"# Module {mod.name}\n")
+        signals_output = renderer.render_signal_table(mod.ports)
+        params_output = renderer.render_parameter_table(mod.parameters)
 
-        # Signal interface
-        print(renderer.render_signal_table(mod.ports))
-        print()
-
-        # Parameters / generics
-        print(renderer.render_parameter_table(mod.parameters))
-        print()
+        # HTML renderer outputs a full page
+        if hasattr(renderer, "render_full_page"):
+            print(renderer.render_full_page(mod.name, signals_output, params_output))
+        else:
+            print(f"# Module {mod.name}\n")
+            print(signals_output)
+            print()
+            print(params_output)
+            print()
 
     return 0
 
