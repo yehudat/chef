@@ -26,6 +26,10 @@ from typing import Iterable, List, Set
 
 from .model import Module
 from .slang_backend import SlangBackend
+from .registry import Registry
+
+# Registry for strategy implementations
+strategy_registry = Registry("strategy")
 
 
 class InterfaceStrategy:
@@ -54,6 +58,7 @@ class InterfaceStrategy:
         raise NotImplementedError
 
 
+@strategy_registry.register("lrm")
 class LRM2017Strategy(InterfaceStrategy):
     """Interpretation strategy adhering to the SystemVerilog‑2017 LRM.
 
@@ -87,6 +92,7 @@ class LRM2017Strategy(InterfaceStrategy):
         return self.backend.get_modules()
 
 
+@strategy_registry.register("genesis2")
 class Genesis2Strategy(InterfaceStrategy):
     """Interpretation strategy for Genesis2‑generated RTL.
 

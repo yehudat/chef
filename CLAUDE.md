@@ -23,11 +23,12 @@ Uses pyslang for parsing (requires Docker as pyslang needs compiled extensions).
 Always run `./test.sh sanity` before commits.
 
 ### Git Commits
-Format: `[chef] [context] max-6-words-comment`
-Examples:
-- `[chef] [renderer] fix table header column names`
-- `[chef] [slang] add nested struct lookup`
-- `[chef] [ci] replace codecov with artifacts`
+- Format: `[chef] [context] max-6-words-comment`
+- Style: one line, 2 tags, as below. No more then 6 workds in the further comment. Laconic.
+- Examples:
+    - `[chef] [renderer] fix table header column names`
+    - `[chef] [slang] add nested struct lookup`
+    - `[chef] [ci] replace codecov with artifacts`
 
 ## Architecture
 
@@ -37,6 +38,8 @@ Examples:
 - `svlang/renderer.py` - markdown table generation
 - `svlang/strategy.py` - Genesis2Strategy (default), handles imports
 - `svlang/model.py` - data models (StructType, BasicType, StructField, etc.)
+- `svlang/genesis2.py` - Genesis2 preprocessing (comment stripping, import extraction)
+- `svlang/parser.py` - legacy regex-based parser (slang_backend is preferred)
 
 ### Parsing Strategy
 - Default: `genesis2` (handles Genesis2-generated RTL patterns)

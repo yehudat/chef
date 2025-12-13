@@ -1,50 +1,17 @@
-"""Rendering utilities for SystemVerilog models.
+"""Markdown table renderer.
 
-This module defines a simple table rendering interface and concrete
-implementations for Markdown output.  The renderer abstracts away
-formatting details and makes it easy to add additional output formats
-without modifying the core parser or model classes (Open/Closed
-principle).  For example, a CSV renderer could inherit from
-:class:`TableRenderer` and override the rendering methods to output
-comma-separated values.
+Renders ports and parameters as GitHub Flavoured Markdown tables.
 """
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Iterable, List, Optional
+from typing import Iterable, List
 
-from .model import Parameter, Port, StructType, UnionType
-
-
-class TableRenderer(ABC):
-    """Abstract base class for rendering tables of parameters and ports."""
-
-    @abstractmethod
-    def render_signal_table(self, signals: Iterable[Port]) -> str:
-        """Render a table of port signals.
-
-        Args:
-            signals: Iterable of :class:`Port` objects.
-
-        Returns:
-            A string containing the formatted table.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def render_parameter_table(self, params: Iterable[Parameter]) -> str:
-        """Render a table of module parameters.
-
-        Args:
-            params: Iterable of :class:`Parameter` objects.
-
-        Returns:
-            A string containing the formatted table.
-        """
-        raise NotImplementedError
+from ..model import Parameter, Port, StructType, UnionType
+from .base import TableRenderer, renderer_registry
 
 
+@renderer_registry.register("markdown")
 class MarkdownTableRenderer(TableRenderer):
     """Render tables in GitHub Flavoured Markdown format."""
 
