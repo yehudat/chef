@@ -122,7 +122,7 @@ class TestNestedStructIntegration(unittest.TestCase):
     def test_render_nested_struct_with_indentation(self):
         """Verify markdown renderer shows nested struct fields with indentation."""
         from svlang.strategy import Genesis2Strategy
-        from svlang.renderer import MarkdownTableRenderer
+        from svlang.renderers import MarkdownTableRenderer
 
         strategy = Genesis2Strategy()
         strategy._find_git_root = lambda path: self.fixtures_dir
@@ -156,7 +156,7 @@ class TestNestedStructIntegration(unittest.TestCase):
     def test_full_signal_table_with_nested_structs(self):
         """Verify complete signal table renders nested structs in Description."""
         from svlang.strategy import Genesis2Strategy
-        from svlang.renderer import MarkdownTableRenderer
+        from svlang.renderers import MarkdownTableRenderer
 
         strategy = Genesis2Strategy()
         strategy._find_git_root = lambda path: self.fixtures_dir

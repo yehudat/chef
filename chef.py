@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from svlang.strategy import strategy_registry
-from svlang.renderer import renderer_registry
+from svlang.renderers import renderer_registry
 
 
 def cmd_fetch_if(args: argparse.Namespace) -> int:

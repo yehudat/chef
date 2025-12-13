@@ -113,12 +113,12 @@ class TestRendererRegistry(unittest.TestCase):
 
     def test_renderer_registry_has_markdown(self):
         """renderer_registry should have 'markdown' registered."""
-        from svlang.renderer import renderer_registry
+        from svlang.renderers import renderer_registry
         self.assertIn("markdown", renderer_registry)
 
     def test_renderer_registry_has_csv(self):
         """renderer_registry should have 'csv' registered."""
-        from svlang.renderer import renderer_registry
+        from svlang.renderers import renderer_registry
         self.assertIn("csv", renderer_registry)
 
 

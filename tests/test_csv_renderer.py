@@ -3,7 +3,7 @@ import io
 import unittest
 
 from svlang.model import BasicType, Port, Parameter, StructField, StructType, UnionType
-from svlang.renderer import CsvTableRenderer
+from svlang.renderers import CsvTableRenderer
 
 
 class TestCsvRendererBasic(unittest.TestCase):

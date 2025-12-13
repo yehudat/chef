@@ -34,7 +34,7 @@ from .model import (
 from .slang_backend import SlangBackend  # noqa: F401
 from .registry import Registry
 from .strategy import InterfaceStrategy, LRM2017Strategy, Genesis2Strategy, strategy_registry  # noqa: F401
-from .renderer import TableRenderer, MarkdownTableRenderer, CsvTableRenderer, HtmlTreeRenderer, renderer_registry
+from .renderers import TableRenderer, MarkdownTableRenderer, CsvTableRenderer, HtmlTreeRenderer, renderer_registry
 
 __all__ = [
     "SlangBackend",

@@ -1,7 +1,7 @@
 import unittest
 
 from svlang.model import BasicType, StructField, StructType, UnionType
-from svlang.renderer import MarkdownTableRenderer
+from svlang.renderers import MarkdownTableRenderer
 
 
 class TestNestedStructParsing(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
 
 from svlang.model import BasicType, Port, Parameter, StructField, StructType, UnionType
-from svlang.renderer import HtmlTreeRenderer
+from svlang.renderers import HtmlTreeRenderer
 
 
 class TestHtmlRendererBasic(unittest.TestCase):
@@ -173,12 +173,12 @@ class TestHtmlRendererRegistry(unittest.TestCase):
 
     def test_html_registered(self):
         """HTML renderer should be registered."""
-        from svlang.renderer import renderer_registry
+        from svlang.renderers import renderer_registry
         self.assertIn("html", renderer_registry)
 
     def test_html_creation(self):
         """HTML renderer should be creatable from registry."""
-        from svlang.renderer import renderer_registry
+        from svlang.renderers import renderer_registry
         renderer = renderer_registry.create("html")
         self.assertIsInstance(renderer, HtmlTreeRenderer)
 
