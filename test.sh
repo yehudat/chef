@@ -52,18 +52,20 @@ case "$MODE" in
   sanity)
     echo "[test.sh] Running sanity tests (${#SANITY_TESTS[@]} tests)..."
     docker run --rm \
+      --entrypoint bash \
       -v "$PWD":/app \
       -w /app \
       "$IMAGE_NAME" \
-      sh -c "$PYTHON_CMD unittest ${SANITY_TESTS[*]} $COVERAGE_REPORT"
+      -c "$PYTHON_CMD unittest ${SANITY_TESTS[*]} $COVERAGE_REPORT"
     ;;
   regression|*)
     echo "[test.sh] Running full regression..."
     docker run --rm \
+      --entrypoint bash \
       -v "$PWD":/app \
       -w /app \
       "$IMAGE_NAME" \
-      sh -c "$PYTHON_CMD unittest discover -s tests $COVERAGE_REPORT"
+      -c "$PYTHON_CMD unittest discover -s tests $COVERAGE_REPORT"
     ;;
 esac
 

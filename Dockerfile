@@ -24,5 +24,5 @@ RUN pip install --upgrade pip \
 # Copy the rest of the source tree
 COPY . .
 
-# Default command: run chef.py (facade CLI)
-CMD ["python", "chef.py"]
+# Entrypoint: run chef.py (facade CLI)
+ENTRYPOINT ["python", "chef.py"]
