@@ -6,11 +6,12 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE_NAME=yehudats/chef:latest
 
 docker run --rm \
   --entrypoint coverage \
-  -v "$PWD":/app \
+  -v "$SCRIPT_DIR":/app \
   -w /app \
   "$IMAGE_NAME" \
   report --show-missing

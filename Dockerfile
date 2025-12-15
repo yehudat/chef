@@ -25,4 +25,4 @@ RUN pip install --upgrade pip \
 COPY . .
 
 # Entrypoint: run chef.py (facade CLI)
-ENTRYPOINT ["python", "chef.py"]
+ENTRYPOINT ["python", "/app/chef.py"]

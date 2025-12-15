@@ -14,11 +14,11 @@ if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
   docker build -t "$IMAGE_NAME" .
 fi
 
-# Mount current repo into /app and run chef.py with all passed arguments.
-# The Dockerfile ENTRYPOINT is ["python", "chef.py"], so args are appended directly.
+# Mount current directory to /workdir for user's SV files.
+# App code lives in /app (baked into image).
 docker run --rm \
-  -v "$PWD":/app \
-  -w /app \
+  -v "$PWD":/workdir \
+  -w /workdir \
   "$IMAGE_NAME" \
   "$@"
 

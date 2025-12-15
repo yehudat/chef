@@ -9,6 +9,7 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE_NAME=yehudats/chef:latest
 MODE=${1:-regression}
 COVERAGE=false
@@ -32,7 +33,7 @@ fi
 # Build the image if it doesn't exist locally
 if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
   echo "[test.sh] Docker image '$IMAGE_NAME' not found, building..."
-  docker build -t "$IMAGE_NAME" .
+  docker build -t "$IMAGE_NAME" "$SCRIPT_DIR"
 fi
 
 # Sanity tests: one representative test per suite (excluding integration)
@@ -53,7 +54,7 @@ case "$MODE" in
     echo "[test.sh] Running sanity tests (${#SANITY_TESTS[@]} tests)..."
     docker run --rm \
       --entrypoint bash \
-      -v "$PWD":/app \
+      -v "$SCRIPT_DIR":/app \
       -w /app \
       "$IMAGE_NAME" \
       -c "$PYTHON_CMD unittest ${SANITY_TESTS[*]} $COVERAGE_REPORT"
@@ -62,7 +63,7 @@ case "$MODE" in
     echo "[test.sh] Running full regression..."
     docker run --rm \
       --entrypoint bash \
-      -v "$PWD":/app \
+      -v "$SCRIPT_DIR":/app \
       -w /app \
       "$IMAGE_NAME" \
       -c "$PYTHON_CMD unittest discover -s tests $COVERAGE_REPORT"
