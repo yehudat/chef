@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import sys
 
 from svlang.strategy import strategy_registry
@@ -19,6 +20,14 @@ def cmd_fetch_if(args: argparse.Namespace) -> int:
     if not os.path.isfile(args.file):
         sys.exit(f"Error: File not found: {args.file}")
 
+    # Compile exclude pattern if provided
+    exclude_pattern = None
+    if args.exclude:
+        try:
+            exclude_pattern = re.compile(args.exclude)
+        except re.error as e:
+            sys.exit(f"Error: Invalid regex pattern: {e}")
+
     strategy = strategy_registry.create(args.strategy)
     strategy.load_design([args.file])
     modules = strategy.get_modules()
@@ -26,8 +35,15 @@ def cmd_fetch_if(args: argparse.Namespace) -> int:
     renderer = renderer_registry.create(args.format)
 
     for mod in modules:
-        signals_output = renderer.render_signal_table(mod.ports)
-        params_output = renderer.render_parameter_table(mod.parameters)
+        # Filter ports and parameters if exclude pattern provided
+        ports = mod.ports
+        params = mod.parameters
+        if exclude_pattern:
+            ports = [p for p in ports if not exclude_pattern.search(p.name)]
+            params = [p for p in params if not exclude_pattern.search(p.name)]
+
+        signals_output = renderer.render_signal_table(ports)
+        params_output = renderer.render_parameter_table(params)
 
         # HTML renderer outputs a full page
         if hasattr(renderer, "render_full_page"):
@@ -73,6 +89,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         choices=strategy_registry.keys(),
         default="genesis2",
         help="Parser strategy (default: genesis2).",
+    )
+    fetch_if.add_argument(
+        "--exclude",
+        metavar="REGEX",
+        help="Exclude signals/parameters matching regex pattern.",
     )
     fetch_if.set_defaults(func=cmd_fetch_if)
 
