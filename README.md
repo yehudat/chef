@@ -22,16 +22,16 @@ in multiple formats. It uses [pyslang](https://github.com/MikePopoloski/pyslang)
 
 ```bash
 # Show help
-docker run yehudats/chef:latest --help
+./chef.sh --help
 
-# Parse a SystemVerilog file (mount your files into /app)
-docker run -v $(pwd):/app yehudats/chef:latest fetchif /app/path/to/module.sv
+# Parse a SystemVerilog file
+./chef.sh fetchif path/to/module.sv
 ```
 
 ## Usage
 
 ```bash
-docker run -v $(pwd):/app yehudats/chef:latest [OPTIONS] COMMAND [ARGS]
+./chef.sh [OPTIONS] COMMAND [ARGS]
 
 Commands:
   fetchif FILE    Extract interface (ports and parameters) from a SystemVerilog file
@@ -45,16 +45,25 @@ Options:
 
 ```bash
 # Output as Markdown (default)
-docker run -v $(pwd):/app yehudats/chef:latest fetchif /app/design.sv
+./chef.sh fetchif design.sv
 
 # Output as CSV
-docker run -v $(pwd):/app yehudats/chef:latest --format csv fetchif /app/design.sv
+./chef.sh --format csv fetchif design.sv
 
 # Output as HTML
-docker run -v $(pwd):/app yehudats/chef:latest --format html fetchif /app/design.sv
+./chef.sh --format html fetchif design.sv
 
 # Use LRM parsing strategy (instead of default Genesis2)
-docker run -v $(pwd):/app yehudats/chef:latest fetchif --strategy lrm /app/design.sv
+./chef.sh fetchif --strategy lrm design.sv
+```
+
+## Testing
+
+```bash
+./test.sh                       # full regression
+./test.sh sanity                # quick sanity tests
+./test.sh sanity --coverage     # with coverage report
+./test.sh regression --coverage # full regression with coverage
 ```
 
 ## Output Formats
