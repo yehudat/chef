@@ -15,10 +15,10 @@ if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
 fi
 
 # Mount current repo into /app and run chef.py with all passed arguments.
-# Since the Dockerfile CMD is ["python", "chef.py"], we just pass extra args.
+# The Dockerfile ENTRYPOINT is ["python", "chef.py"], so args are appended directly.
 docker run --rm \
   -v "$PWD":/app \
   -w /app \
   "$IMAGE_NAME" \
-  python chef.py "$@"
+  "$@"
 

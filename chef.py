@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 
 from svlang.strategy import strategy_registry
@@ -12,6 +13,12 @@ def cmd_fetch_if(args: argparse.Namespace) -> int:
     on the ``fetchif`` command. The output format can be selected via
     the ``--format`` option. Both use registries for extensibility.
     """
+    if not getattr(args, "file", None):
+        sys.exit("Error: No file provided. Usage: chef.py fetchif FILE")
+
+    if not os.path.isfile(args.file):
+        sys.exit(f"Error: File not found: {args.file}")
+
     strategy = strategy_registry.create(args.strategy)
     strategy.load_design([args.file])
     modules = strategy.get_modules()

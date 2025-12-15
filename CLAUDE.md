@@ -15,8 +15,8 @@ Uses pyslang for parsing (requires Docker as pyslang needs compiled extensions).
 
 ### Testing
 ```bash
-./test.sh                    # full regression (33 tests)
-./test.sh sanity             # quick sanity (7 tests, ~0.003s)
+./test.sh                    # full regression
+./test.sh sanity             # quick sanity
 ./test.sh sanity --coverage  # with coverage report
 ./test.sh regression --coverage
 ```
@@ -35,11 +35,10 @@ Always run `./test.sh sanity` before commits.
 ### Key Files
 - `chef.py` - CLI entry point, argparse setup
 - `svlang/slang_backend.py` - pyslang parsing, type lookup, struct extraction
-- `svlang/renderer.py` - markdown table generation
 - `svlang/strategy.py` - Genesis2Strategy (default), handles imports
 - `svlang/model.py` - data models (StructType, BasicType, StructField, etc.)
-- `svlang/genesis2.py` - Genesis2 preprocessing (comment stripping, import extraction)
-- `svlang/parser.py` - legacy regex-based parser (slang_backend is preferred)
+- `svlang/registry.py` - generic registry pattern for strategies/renderers
+- `svlang/renderers/` - output format renderers (markdown, csv, html)
 
 ### Parsing Strategy
 - Default: `genesis2` (handles Genesis2-generated RTL patterns)
