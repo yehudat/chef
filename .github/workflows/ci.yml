@@ -47,9 +47,7 @@ jobs:
         run: ./test.sh sanity --coverage
 
       - name: Show coverage summary
-        run: |
-          docker run --rm -v "$PWD":/app -w /app yehudats/chef:latest \
-            coverage report --show-missing
+        run: ./coverage.sh
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -87,9 +85,7 @@ jobs:
         run: ./test.sh regression --coverage
 
       - name: Show coverage summary
-        run: |
-          docker run --rm -v "$PWD":/app -w /app yehudats/chef:latest \
-            coverage report --show-missing
+        run: ./coverage.sh
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
