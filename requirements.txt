@@ -1,5 +1,6 @@
 # Core dependencies for the `chef` tool.
 coverage>=7.0,<8.0
+jinja2>=3.0,<4.0
 
 # Install pyslang so that the project can take advantage of the SystemVerilog
 # front‑end provided by the slang compiler.  pyslang exposes the full slang
