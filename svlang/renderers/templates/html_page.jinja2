@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ module_name }} - Interface</title>
+    <style>
+{{ css }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ module_name }}</h1>
+
+        {# Filter Panel #}
+        <div class="filter-panel">
+            <div class="filter-input-wrapper">
+                <span class="filter-icon">&#128269;</span>
+                <input type="text" id="filter-input" class="filter-input" placeholder="Filter (regex)..." autocomplete="off">
+            </div>
+            <div class="filter-options">
+                <div class="filter-checkbox">
+                    <input type="checkbox" id="filter-exclude">
+                    <label for="filter-exclude">Hide matching</label>
+                </div>
+                <button id="filter-clear" class="filter-clear">Clear</button>
+            </div>
+            <span id="filter-status" class="filter-status"></span>
+        </div>
+
+        <h2>Signals</h2>
+        {{ signals_html | safe }}
+
+        <h2>Parameters</h2>
+        {{ params_html | safe }}
+    </div>
+    <script>
+{{ js }}
+    </script>
+</body>
+</html>
