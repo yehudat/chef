@@ -12,6 +12,8 @@ in multiple formats. It uses [pyslang](https://github.com/MikePopoloski/pyslang)
 - Extract module ports and parameters from SystemVerilog files
 - Support for nested structs and unions with recursive field expansion
 - Multiple output formats: Markdown, CSV, HTML
+- Interactive HTML output with regex filter and hide/show toggle
+- CLI regex filter to exclude signals/parameters
 - Genesis2-generated RTL pattern support
 
 ## Requirements
@@ -37,8 +39,12 @@ Commands:
   fetchif FILE    Extract interface (ports and parameters) from a SystemVerilog file
 
 Options:
-  --format FORMAT   Output format: markdown (default), csv, html
-  --help            Show help message
+  --format FORMAT    Output format: markdown (default), csv, html
+  --help             Show help message
+
+fetchif Options:
+  --strategy NAME    Parser strategy: genesis2 (default), lrm
+  --exclude REGEX    Exclude signals/parameters matching regex pattern
 ```
 
 ### Examples
@@ -50,11 +56,17 @@ Options:
 # Output as CSV
 ./chef.sh --format csv fetchif design.sv
 
-# Output as HTML
+# Output as HTML (with interactive filter panel)
 ./chef.sh --format html fetchif design.sv
 
 # Use LRM parsing strategy (instead of default Genesis2)
 ./chef.sh fetchif --strategy lrm design.sv
+
+# Exclude clock and reset signals
+./chef.sh fetchif --exclude "clk|rst" design.sv
+
+# Exclude debug signals
+./chef.sh fetchif --exclude "debug_.*" design.sv
 ```
 
 ## Testing
@@ -88,7 +100,10 @@ Comma-separated values for spreadsheet import.
 
 ### HTML
 
-Interactive HTML page with collapsible nested struct views.
+Interactive HTML page with:
+- Collapsible nested struct views
+- Regex filter panel (filters as you type)
+- "Hide matching" toggle for inverse filtering
 
 ## Parser Strategies
 
